@@ -76,6 +76,17 @@ The /auth/oauth-complete page:
 
 (Older direct JSON responses will no longer appear to the user; they are replaced by the progress UI & redirect.)
 
+### Google OAuth Redirect Requirement (Backend)
+
+Backend callback MUST (instead of returning raw JSON):
+
+1. Set cookie (httpOnly recommended) OR include token in JSON body.
+2. Redirect (302) to: https://<frontend-domain>/auth/oauth-complete
+   - Preserve state (optional) or append ?token=<JWT> (frontend now handles).
+3. (Optional) Support `?redirect=` and/or `state=redir=<url>` sent from start URL.
+
+If backend keeps returning JSON directly, users will remain on backend domain (cannot be auto‑captured client-side).
+
 ## Scripts
 
 ```

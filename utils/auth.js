@@ -42,16 +42,19 @@ export const AuthProvider = ({ children }) => {
     if (!token && typeof window !== "undefined") {
       const url = new URL(window.location.href);
       const qpToken = url.searchParams.get("token");
+      const state = url.searchParams.get("state");
+      // state may look like 'redir=https://...'
       if (qpToken) {
         token = qpToken;
-        Cookies.set("token", token, { expires: 0.5 });
-        // clean query (optional)
-        if (window.location.pathname.startsWith("/auth/oauth-complete")) {
-          url.searchParams.delete("token");
-          window.history.replaceState(null, "", url.pathname);
-        }
+      } else if (state && state.includes("token=")) {
+        const maybe = state.split("token=").pop();
+        if (maybe && maybe.length > 20) token = maybe;
       }
-      if (!token) {
+      if (token) {
+        Cookies.set("token", token, { expires: 0.5 });
+        if (window.location.pathname.startsWith("/auth/"))
+          window.history.replaceState(null, "", url.pathname);
+      } else {
         token = localStorage.getItem("authToken");
         if (token) Cookies.set("token", token, { expires: 0.5 });
       }

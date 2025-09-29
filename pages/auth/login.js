@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../utils/auth";
 import Link from "next/link";
-import { API_BASE_URL } from "../../utils/api";
+import { API_BASE_URL, buildGoogleOAuthURL } from "../../utils/api";
 
 export default function Login() {
   const { login } = useAuth();
@@ -34,11 +34,8 @@ export default function Login() {
   }, []);
 
   const startGoogle = () => {
-    const base = `${API_BASE_URL}/api/v1/auth/google`;
-    const redirect = encodeURIComponent(
-      `${window.location.origin}/auth/oauth-complete`
-    );
-    window.location.href = `${base}?redirect=${redirect}`;
+    const url = buildGoogleOAuthURL();
+    window.location.href = url;
   };
 
   return (
@@ -79,6 +76,9 @@ export default function Login() {
           No account? <Link href="/auth/register">Register</Link>
         </p>
       </div>
+    </div>
+  );
+}
     </div>
   );
 }

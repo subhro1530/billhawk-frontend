@@ -210,3 +210,17 @@ export const premiumAPI = {
       throw e;
     }),
 };
+
+export const buildGoogleOAuthURL = (
+  frontendRedirect = "/auth/oauth-complete"
+) => {
+  try {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const target = origin + frontendRedirect;
+    const redirect = encodeURIComponent(target);
+    const state = encodeURIComponent(`redir=${target}`);
+    return `${API_BASE_URL}/api/v1/auth/google?redirect=${redirect}&state=${state}`;
+  } catch {
+    return `${API_BASE_URL}/api/v1/auth/google`;
+  }
+};

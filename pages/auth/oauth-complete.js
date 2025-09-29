@@ -100,7 +100,11 @@ export default function OAuthComplete() {
           // backend returns JSON with token & user
           const json = await r.json().catch(() => ({}));
           const tok =
-            json?.token || json?.data?.token || json?.data?.data?.token || null;
+            json?.token ||
+            json?.data?.token ||
+            json?.data?.data?.token ||
+            json?.user?.token ||
+            null;
           if (tok) {
             persistToken(tok);
           } else {
@@ -130,6 +134,25 @@ export default function OAuthComplete() {
       return () => clearTimeout(t);
     }
   }, [user, loading, phase]);
+
+  useEffect(() => {
+    // safety: if token already in cookie just fetch immediately
+    if (Cookies.get("token") && phase === "init") {
+      setPhase("exchanging");
+      finalize();
+    }
+  }, [phase, fetchUser]);
+
+  // Redirect if token present but user fetch is slow
+  useEffect(() => {
+    // force redirect if token cookie exists >3s even if user object not yet set
+    if (phase !== "error" && Cookies.get("token") && elapsed >= 3 && !user) {
+      // attempt one more fetch then redirect
+      fetchUser().finally(() =>
+        setTimeout(() => (window.location.href = "/dashboard"), 400)
+      );
+    }
+  }, [elapsed, phase, user, fetchUser]);
 
   function persistToken(token) {
     try {

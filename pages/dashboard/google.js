@@ -5,8 +5,7 @@ import Layout from "../../components/Layout";
 import GlassCard from "../../components/GlassCard";
 import api from "../../utils/api";
 import { toast } from "react-hot-toast";
-import Link from "next/link";
-import { API_BASE_URL } from "../../utils/api";
+import { buildGoogleOAuthURL } from "../../utils/api";
 
 export default function GoogleDataPage() {
   const { user, loading } = useAuth();
@@ -43,8 +42,14 @@ export default function GoogleDataPage() {
         }
       >
         <p style={{ fontSize: ".7rem", opacity: 0.75, marginTop: 0 }}>
-          Ensure you have authenticated with Google. If not, sign in via:{" "}
-          <Link href={`${API_BASE_URL}/api/v1/auth/google`}>Google OAuth</Link>
+          Ensure you have authenticated with Google.&nbsp;
+          <button
+            type="button"
+            style={{ background: "#2b3152", fontSize: ".6rem" }}
+            onClick={() => (window.location.href = buildGoogleOAuthURL())}
+          >
+            Start Google OAuth
+          </button>
         </p>
         <pre
           style={{
