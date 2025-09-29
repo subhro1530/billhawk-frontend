@@ -1,0 +1,20 @@
+{
+  "name": "billhawk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BillHawk – Smart bill & reminder tracking frontend (Next.js)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "echo \"No linter configured\""
+  },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "js-cookie": "^3.0.5",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-hot-toast": "^2.4.1"
+  }
+}
