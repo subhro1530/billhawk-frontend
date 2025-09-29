@@ -2,8 +2,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import toast from "react-hot-toast";
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://billhawk-backend.onrender.com";
+export const API_BASE_URL = "https://billhawk-backend.onrender.com";
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api/v1`,
@@ -69,12 +68,16 @@ api.interceptors.response.use(
 export default api;
 
 // Specific API functions
+export const GOOGLE_CALLBACK_URL = `${API_BASE_URL}/api/v1/auth/google/callback`;
+
 export const authAPI = {
   login: (email, password) => api.post("/auth/login", { email, password }),
   register: (email, password) =>
     api.post("/auth/register", { email, password }),
   logout: () => api.post("/auth/logout"),
   googleAuth: () => `${API_BASE_URL}/api/v1/auth/google`,
+  // optional direct callback (normally backend handles redirect)
+  googleCallback: () => GOOGLE_CALLBACK_URL,
   adminLogin: (code) => api.post("/auth/admin-login", { code }),
 };
 
@@ -154,4 +157,14 @@ export const exportAPI = {
 
 export const activityAPI = {
   list: () => api.get("/user/activity"),
+};
+
+export const premiumAPI = {
+  getStatus: () => api.get("/premium/status"),
+  subscribe: () => api.post("/premium/subscribe"),
+  unsubscribe: () =>
+    api.post("/premium/unsubscribe").catch((e) => {
+      console.error("[premium.unsubscribe.api.error]", e?.response || e);
+      throw e;
+    }),
 };

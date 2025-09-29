@@ -166,3 +166,27 @@ input:focus {
   z-index: 90;
   animation: fadeIn 0.35s ease;
 }
+
+.footer-h {
+  font-size: 0.7rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  opacity: 0.65;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+}
+.footer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+}
+.footer-list li a {
+  color: rgba(255, 255, 255, 0.8);
+}
+.footer-list li a:hover {
+  color: #fff;
+}

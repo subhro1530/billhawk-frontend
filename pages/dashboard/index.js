@@ -44,6 +44,50 @@ export default function DashboardHome() {
     <Layout>
       <div
         style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+          margin: "0 0 1.25rem",
+          padding: ".85rem 1rem",
+          background:
+            "linear-gradient(135deg,rgba(40,46,72,0.55),rgba(28,32,54,0.55))",
+          border: "1px solid rgba(255,255,255,0.07)",
+          borderRadius: 18,
+        }}
+      >
+        <img
+          src="/logo.png"
+          alt="BillHawk"
+          style={{
+            height: 60,
+            width: 60,
+            objectFit: "contain",
+            filter: "drop-shadow(0 3px 10px rgba(0,0,0,0.6))",
+          }}
+        />
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <span
+            style={{
+              fontSize: "1.05rem",
+              fontWeight: 600,
+              letterSpacing: ".6px",
+            }}
+          >
+            BillHawk Dashboard
+          </span>
+          <span
+            style={{
+              fontSize: ".65rem",
+              opacity: 0.65,
+              letterSpacing: ".5px",
+            }}
+          >
+            Overview of your finance reminders & bill flow
+          </span>
+        </div>
+      </div>
+      <div
+        style={{
           display: "grid",
           gap: "1.5rem",
           gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))",

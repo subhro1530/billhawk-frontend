@@ -35,9 +35,10 @@ export default function Home() {
               src="/logo.png"
               alt="BillHawk"
               style={{
-                height: 54,
-                width: 54,
-                marginBottom: "1rem",
+                height: 72,
+                width: 72,
+                marginBottom: "1.25rem",
+                filter: "drop-shadow(0 4px 14px rgba(0,0,0,0.55))",
               }}
             />
             <h1 className={styles.heroTitle}>
@@ -151,6 +152,74 @@ export default function Home() {
             </div>
           </div>
         </section>
+        <footer
+          style={{
+            marginTop: "4rem",
+            padding: "3rem clamp(1rem,4vw,4rem)",
+            background: "rgba(15,17,29,0.55)",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            display: "grid",
+            gap: "2.5rem",
+            gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
+          }}
+        >
+          <div>
+            <img
+              src="/logo.png"
+              alt="BillHawk"
+              style={{ height: 48, width: 48, marginBottom: ".75rem" }}
+            />
+            <div style={{ fontSize: ".75rem", opacity: 0.65, lineHeight: 1.5 }}>
+              Smart tracking of payables & receivables with structured reminders
+              and clean financial visibility.
+            </div>
+          </div>
+          <div>
+            <div className="footer-h">Product</div>
+            <ul className="footer-list">
+              <li>
+                <Link href="/docs">Docs</Link>
+              </li>
+              <li>
+                <Link href="/dashboard">Dashboard</Link>
+              </li>
+              <li>
+                <Link href="/contacts">Contact</Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <div className="footer-h">Resources</div>
+            <ul className="footer-list">
+              <li>
+                <a
+                  href="https://status.example.com"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Status
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://forms.gle/example"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Feedback
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <div className="footer-h">Security</div>
+            <ul className="footer-list">
+              <li>Token auth</li>
+              <li>Role control</li>
+              <li>Revocation</li>
+            </ul>
+          </div>
+        </footer>
       </main>
     </>
   );

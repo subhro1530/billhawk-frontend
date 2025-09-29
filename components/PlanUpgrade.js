@@ -6,7 +6,7 @@ import { useState } from "react";
 
 export default function PlanUpgrade() {
   const { plan, fetchUser } = useAuth();
-  const [busy, setBusy] = useState(false); // add local busy state
+  const [busy, setBusy] = useState(false);
 
   const upgrade = async () => {
     if (plan === "premium" || busy) return;
@@ -16,7 +16,8 @@ export default function PlanUpgrade() {
       await fetchUser();
       window.dispatchEvent(new CustomEvent("bh:planChanged"));
       toast.success("Premium activated");
-    } catch {
+    } catch (e) {
+      console.error("[premium.subscribe.failed]", e);
       toast.error("Activate failed");
     } finally {
       setBusy(false);
@@ -30,8 +31,14 @@ export default function PlanUpgrade() {
       await premiumAPI.unsubscribe();
       await fetchUser();
       window.dispatchEvent(new CustomEvent("bh:planChanged"));
-      toast.success("Premium deactivated");
-    } catch {
+      if (plan === "premium") {
+        // if still premium after fetch – backend didn’t apply
+        toast.error("Deactivation not applied – retry");
+      } else {
+        toast.success("Premium deactivated");
+      }
+    } catch (e) {
+      console.error("[premium.unsubscribe.failed]", e);
       toast.error("Deactivate failed");
     } finally {
       setBusy(false);
@@ -53,8 +60,6 @@ export default function PlanUpgrade() {
           maxWidth: 220,
           fontWeight: 600,
           letterSpacing: ".3px",
-          opacity: busy ? 0.65 : 1,
-          cursor: busy ? "not-allowed" : "pointer",
           background: isPremium
             ? "linear-gradient(135deg,#d4af37,#b68b07)"
             : "linear-gradient(135deg,#5564e6,#7c48b5)",
@@ -62,6 +67,8 @@ export default function PlanUpgrade() {
           boxShadow: isPremium
             ? "0 0 0 1px rgba(212,175,55,0.35),0 4px 18px -4px rgba(212,175,55,0.5)"
             : "0 0 0 1px rgba(120,120,255,0.25),0 4px 18px -4px rgba(120,120,255,0.4)",
+          opacity: busy ? 0.6 : 1,
+          cursor: busy ? "not-allowed" : "pointer",
         }}
       >
         {busy

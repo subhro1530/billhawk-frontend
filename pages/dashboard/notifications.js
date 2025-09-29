@@ -13,6 +13,7 @@ export default function NotificationsPage() {
     try {
       const r = await notificationsAPI.list(filterUnread ? 1 : undefined);
       setItems(r.data.data.notifications || []);
+      window.dispatchEvent(new CustomEvent("bh:notificationsChanged"));
     } catch {}
   };
   useEffect(() => {

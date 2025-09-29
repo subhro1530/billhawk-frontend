@@ -64,7 +64,13 @@ Backend handles Google OAuth at:
 /api/v1/auth/google
 ```
 
-Frontend uses a simple anchor link directing the user there. After successful auth you receive JSON (if hitting callback directly) or adapt flow by wiring a redirect page if needed.
+Callback (configured at Google Cloud Console):
+
+```
+https://billhawk-backend.vercel.app/api/v1/auth/google/callback
+```
+
+The frontend links to the auth start endpoint; the backend processes the callback and issues the application token.
 
 ## Scripts
 
@@ -114,6 +120,128 @@ All backend endpoints have UI or trigger points:
 - JWT stored in cookie (js-cookie). Consider httpOnly server cookies for production.
 - On 401 responses token is cleared & user redirected.
 - Revoked tokens respected by backend.
+
+## Quick API cURL One-Liners (Production Backend)
+
+Backend base: https://billhawk-backend.onrender.com
+
+(Replace TOKEN, BILL_ID, JOB_ID, NOTIF_ID, ADMIN_TOKEN etc.)
+
+```bash
+# ---------- Auth & User ----------
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"u1@test.com","password":"pass123"}'
+
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"u1@test.com","password":"pass123"}'
+
+curl -s -H "Authorization: Bearer TOKEN" \
+  https://billhawk-backend.onrender.com/api/v1/user/me
+
+curl -s -X PUT https://billhawk-backend.onrender.com/api/v1/user/me \
+  -H "Authorization: Bearer TOKEN" -H "Content-Type: application/json" \
+  -d '{"displayName":"Demo User"}'
+
+# ---------- Bills ----------
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/bills \
+  -H "Authorization: Bearer TOKEN" -H "Content-Type: application/json" \
+  -d '{"name":"Electric","amount":45.7,"dueDate":"2025-12-10T12:00:00Z"}'
+
+curl -s -H "Authorization: Bearer TOKEN" \
+  https://billhawk-backend.onrender.com/api/v1/bills
+
+curl -s -H "Authorization: Bearer TOKEN" \
+  https://billhawk-backend.onrender.com/api/v1/bills/BILL_ID
+
+curl -s -X PUT https://billhawk-backend.onrender.com/api/v1/bills/BILL_ID \
+  -H "Authorization: Bearer TOKEN" -H "Content-Type: application/json" \
+  -d '{"name":"Electric Updated"}'
+
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/bills/recurring \
+  -H "Authorization: Bearer TOKEN" -H "Content-Type: application/json" \
+  -d '{"name":"Rent","amount":1000,"interval":"monthly","nextOccurrence":"2025-11-01T10:00:00Z"}'
+
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/bills/BILL_ID/settle \
+  -H "Authorization: Bearer TOKEN" -H "Content-Type: application/json" \
+  -d '{"note":"Paid online"}'
+
+curl -s -H "Authorization: Bearer TOKEN" \
+  https://billhawk-backend.onrender.com/api/v1/bills/BILL_ID/history
+
+curl -s -H "Authorization: Bearer TOKEN" \
+  "https://billhawk-backend.onrender.com/api/v1/bills/search?q=rent"
+
+curl -s -H "Authorization: Bearer TOKEN" -o bills.csv \
+  "https://billhawk-backend.onrender.com/api/v1/bills/export?format=csv"
+
+# ---------- Categories ----------
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/categories \
+  -H "Authorization: Bearer TOKEN" -H "Content-Type: application/json" \
+  -d '{"name":"Utilities","color":"#33aaff"}'
+
+curl -s -H "Authorization: Bearer TOKEN" \
+  https://billhawk-backend.onrender.com/api/v1/categories
+
+# ---------- Reminders ----------
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/reminders \
+  -H "Authorization: Bearer TOKEN" -H "Content-Type: application/json" \
+  -d '{"billId":"BILL_ID","remindAt":"2025-12-08T09:00:00Z"}'
+
+curl -s -H "Authorization: Bearer TOKEN" \
+  "https://billhawk-backend.onrender.com/api/v1/reminders/upcoming?days=60"
+
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/reminders/templates \
+  -H "Authorization: Bearer TOKEN" -H "Content-Type: application/json" \
+  -d '{"name":"2Day","offsetDays":2}'
+
+# ---------- Notifications ----------
+curl -s -H "Authorization: Bearer TOKEN" \
+  https://billhawk-backend.onrender.com/api/v1/notifications
+
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/notifications/NOTIF_ID/read \
+  -H "Authorization: Bearer TOKEN"
+
+# ---------- Analytics ----------
+curl -s -H "Authorization: Bearer TOKEN" \
+  https://billhawk-backend.onrender.com/api/v1/analytics/overview
+
+curl -s -H "Authorization: Bearer TOKEN" \
+  https://billhawk-backend.onrender.com/api/v1/analytics/cashflow
+
+# ---------- API Keys ----------
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/user/api-keys \
+  -H "Authorization: Bearer TOKEN" -H "Content-Type: application/json" \
+  -d '{"label":"cli"}'
+
+curl -s -H "Authorization: Bearer TOKEN" \
+  https://billhawk-backend.onrender.com/api/v1/user/api-keys
+
+# ---------- Export ----------
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/user/export \
+  -H "Authorization: Bearer TOKEN"
+
+curl -s -H "Authorization: Bearer TOKEN" \
+  https://billhawk-backend.onrender.com/api/v1/user/export/JOB_ID/status
+
+# ---------- Premium ----------
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/premium/subscribe \
+  -H "Authorization: Bearer TOKEN"
+
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/premium/unsubscribe \
+  -H "Authorization: Bearer TOKEN"
+
+# ---------- Admin ----------
+curl -s -X POST https://billhawk-backend.onrender.com/api/v1/auth/admin-login \
+  -H "Content-Type: application/json" \
+  -d '{"code":"admin123"}'
+
+curl -s -H "Authorization: Bearer ADMIN_TOKEN" \
+  "https://billhawk-backend.onrender.com/api/v1/admin/users?limit=10"
+```
+
+(If additional endpoints or variants are required, note them and they can be appended here.)
 
 ## License
 
