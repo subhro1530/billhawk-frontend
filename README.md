@@ -56,21 +56,25 @@ NEXT_PUBLIC_API_URL=https://billhawk-backend.onrender.com
 
 If omitted, it defaults to the hosted backend.
 
-## Google OAuth
+## Google OAuth (Updated Flow)
 
-Backend handles Google OAuth at:
+Backend should:
 
-```
-/api/v1/auth/google
-```
-
-Callback (configured at Google Cloud Console):
+1. Complete Google exchange.
+2. Set the session cookie (token) in the response (httpOnly recommended).
+3. Redirect (302) to:
 
 ```
-https://billhawk-backend.vercel.app/api/v1/auth/google/callback
+https://<frontend-domain>/auth/oauth-complete
 ```
 
-The frontend links to the auth start endpoint; the backend processes the callback and issues the application token.
+The /auth/oauth-complete page:
+
+- Never shows the raw JSON response.
+- Detects the cookie (or legacy `#token=` fragment), loads /user/me, then redirects to /dashboard.
+  Legacy fragment `#token=<JWT>` still works; it is converted to a cookie then cleaned from the URL.
+
+(Older direct JSON responses will no longer appear to the user; they are replaced by the progress UI & redirect.)
 
 ## Scripts
 
@@ -247,4 +251,5 @@ curl -s -H "Authorization: Bearer ADMIN_TOKEN" \
 
 Internal MVP – add a license if distributing.
 
+Happy hacking!
 Happy hacking!

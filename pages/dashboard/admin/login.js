@@ -3,6 +3,7 @@ import { useAuth } from "../../../utils/auth";
 import { useRouter } from "next/router";
 import api from "../../../utils/api";
 import { toast } from "react-hot-toast";
+import Cookies from "js-cookie";
 
 export default function AdminLogin() {
   const { user, fetchUser } = useAuth();
@@ -12,16 +13,22 @@ export default function AdminLogin() {
 
   const submit = async (e) => {
     e.preventDefault();
+    const c = code.trim();
+    if (!c) return;
     setBusy(true);
     try {
-      const res = await api.post("/auth/admin-login", { code });
+      const res = await api.post("/auth/admin-login", { code: c });
       const token = res.data.data.token;
-      document.cookie = `token=${token}; path=/; max-age=43200`;
+      Cookies.set("token", token, { expires: 0.5 });
       toast.success("Admin token issued");
       await fetchUser();
       router.push("/dashboard/admin/users");
-    } catch {
-      /* handled */
+    } catch (err) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        "Admin login failed";
+      toast.error(msg);
     } finally {
       setBusy(false);
     }

@@ -25,8 +25,37 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // Helper to extract {user, token} regardless of backend envelope shape
+  const extractAuth = (resp) => {
+    const raw = resp?.data ?? {};
+    const dataLayer = raw.data && typeof raw.data === "object" ? raw.data : raw;
+    const token =
+      dataLayer?.token || dataLayer?.access_token || dataLayer?.jwt || null;
+    const user =
+      dataLayer?.user || dataLayer?.profile || (dataLayer?.data?.user ?? null);
+    return { user, token };
+  };
+
   useEffect(() => {
-    const token = Cookies.get("token");
+    let token = Cookies.get("token");
+    // Fallback: fragment/localStorage & query (?token=) legacy
+    if (!token && typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      const qpToken = url.searchParams.get("token");
+      if (qpToken) {
+        token = qpToken;
+        Cookies.set("token", token, { expires: 0.5 });
+        // clean query (optional)
+        if (window.location.pathname.startsWith("/auth/oauth-complete")) {
+          url.searchParams.delete("token");
+          window.history.replaceState(null, "", url.pathname);
+        }
+      }
+      if (!token) {
+        token = localStorage.getItem("authToken");
+        if (token) Cookies.set("token", token, { expires: 0.5 });
+      }
+    }
     if (token) {
       fetchUser();
     } else {
@@ -34,10 +63,23 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // If we redirected after login/register the Provider may mount before fetchUser
+  // This watches for a token newly present while user still null.
+  useEffect(() => {
+    if (!loading && !user && Cookies.get("token")) {
+      fetchUser();
+    }
+  }, [loading, user]);
+
   const fetchUser = useCallback(async () => {
     try {
       const response = await api.get("/user/me");
-      setUser(response.data.data.user);
+      const u =
+        response?.data?.data?.user ||
+        response?.data?.user ||
+        response?.data?.data ||
+        null;
+      if (u) setUser(u);
     } catch (error) {
       console.error("Failed to fetch user:", error);
       if (error.response?.status === 401) {
@@ -49,34 +91,72 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
+    const e = (email || "").trim();
+    const p = (password || "").trim();
+    if (!e || !p) {
+      toast.error("Enter email & password");
+      return { success: false };
+    }
     try {
-      const response = await api.post("/auth/login", { email, password });
-      const { user, token } = response.data.data;
-
-      Cookies.set("token", token, { expires: 0.5 }); // 12 hours
-      setUser(user);
+      const response = await api.post("/auth/login", { email: e, password: p });
+      console.debug("[auth.login.response]", response?.data);
+      const { user: u, token } = extractAuth(response);
+      if (!token) {
+        toast.error("No token in response");
+        return { success: false };
+      }
+      Cookies.set("token", token, { expires: 0.5 });
+      if (u) {
+        setUser(u);
+      } else {
+        // fallback: load profile if user object absent
+        await fetchUser();
+      }
       toast.success("Welcome back!");
       router.push("/dashboard");
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.error || "Login failed";
+      const message =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Login failed";
       toast.error(message);
       return { success: false, error: message };
     }
   };
 
   const register = async (email, password) => {
+    const e = (email || "").trim();
+    const p = (password || "").trim();
+    if (!e || !p) {
+      toast.error("Enter email & password");
+      return { success: false };
+    }
     try {
-      const response = await api.post("/auth/register", { email, password });
-      const { user, token } = response.data.data;
-
+      const response = await api.post("/auth/register", {
+        email: e,
+        password: p,
+      });
+      console.debug("[auth.register.response]", response?.data);
+      const { user: u, token } = extractAuth(response);
+      if (!token) {
+        toast.error("No token in response");
+        return { success: false };
+      }
       Cookies.set("token", token, { expires: 0.5 });
-      setUser(user);
-      toast.success("Account created successfully!");
+      if (u) {
+        setUser(u);
+      } else {
+        await fetchUser();
+      }
+      toast.success("Account created!");
       router.push("/dashboard");
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.error || "Registration failed";
+      const message =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Registration failed";
       toast.error(message);
       return { success: false, error: message };
     }

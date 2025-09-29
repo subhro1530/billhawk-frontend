@@ -9,28 +9,72 @@ const api = axios.create({
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
+    Accept: "application/json", // added
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor (removed custom X-Sent-Auth-Payload to satisfy CORS)
 api.interceptors.request.use(
   (config) => {
     const token = Cookies.get("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Normalize payload for auth endpoints so backend never receives empty body
+    if (
+      config.method === "post" &&
+      /\/auth\/(login|register|admin-login)$/.test(config.url || "")
+    ) {
+      let body = config.data || {};
+      // In case a JSON string accidentally passed
+      if (typeof body === "string") {
+        try {
+          body = JSON.parse(body);
+        } catch {
+          body = {};
+        }
+      }
+      if (config.url.endsWith("/admin-login")) {
+        const code = (body.code ?? "").toString().trim();
+        config.data = { code };
+        if (!code) {
+          console.warn("[auth.admin-login] empty code blocked");
+        }
+      } else {
+        const email = (body.email ?? "").toString().trim();
+        const password = (body.password ?? "").toString().trim();
+        config.data = { email, password };
+        if (!email || !password) {
+          console.warn("[auth.sanitize] empty credentials being sent", {
+            emailPresent: !!email,
+            passwordPresent: !!password,
+          });
+        }
+      }
+      // ensure no legacy custom header stays (CORS fix)
+      if (config.headers["X-Sent-Auth-Payload"])
+        delete config.headers["X-Sent-Auth-Payload"];
+    }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor for error handling
+// Response interceptor for error handling + clearer auth validation messages
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 404) {
+    const status = error.response?.status;
+    const url = error.config?.url || "";
+    if (status === 400 && /\/auth\/(login|register|admin-login)$/.test(url)) {
+      const backendMsg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Invalid credentials";
+      toast.error(backendMsg);
+    } else if (status === 404) {
       console.error("❌ 404 Error:", {
         url: error.config?.url,
         method: error.config?.method,
@@ -48,8 +92,7 @@ api.interceptors.response.use(
           })
         );
       }
-    } else if (error.response?.status === 401) {
-      // Token expired or invalid
+    } else if (status === 401) {
       Cookies.remove("token");
       if (
         typeof window !== "undefined" &&
@@ -57,10 +100,9 @@ api.interceptors.response.use(
       ) {
         window.location.href = "/auth/login";
       }
-    } else if (error.response?.status >= 500) {
+    } else if (status >= 500) {
       toast.error("Server error. Please try again later.");
     }
-
     return Promise.reject(error);
   }
 );

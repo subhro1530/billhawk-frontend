@@ -4,9 +4,19 @@ import styles from "../styles/Home.module.css";
 import { API_BASE_URL } from "../utils/api";
 import { useAuth } from "../utils/auth";
 import NavBar from "../components/NavBar";
+import { useCallback } from "react";
 
 export default function Home() {
   const { user } = useAuth();
+
+  const startGoogle = useCallback(() => {
+    const base = `${API_BASE_URL}/api/v1/auth/google`;
+    const redirect = encodeURIComponent(
+      `${window.location.origin}/auth/oauth-complete`
+    );
+    window.location.href = `${base}?redirect=${redirect}`;
+  }, []);
+
   return (
     <>
       <Head>
@@ -54,11 +64,9 @@ export default function Home() {
                   <Link href="/auth/register">
                     <button>Get Started</button>
                   </Link>
-                  <a href={`${API_BASE_URL}/api/v1/auth/google`}>
-                    <button className={styles.googleBtn}>
-                      <span>Sign in with Google</span>
-                    </button>
-                  </a>
+                  <button className={styles.googleBtn} onClick={startGoogle}>
+                    <span>Sign in with Google</span>
+                  </button>
                 </>
               )}
               {user && (

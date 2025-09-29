@@ -5,9 +5,11 @@ import Link from "next/link";
 export default function Register() {
   const { register } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
+  const submitting = !form.email.trim() || !form.password.trim();
   const submit = (e) => {
     e.preventDefault();
-    register(form.email, form.password);
+    if (submitting) return;
+    register(form.email.trim(), form.password.trim());
   };
   return (
     <div
@@ -32,7 +34,9 @@ export default function Register() {
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
-          <button type="submit">Register</button>
+          <button type="submit" disabled={submitting}>
+            Register
+          </button>
         </form>
         <p style={{ marginTop: "1rem", fontSize: ".85rem", opacity: 0.8 }}>
           Already have an account? <Link href="/auth/login">Login</Link>

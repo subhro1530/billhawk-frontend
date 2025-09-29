@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../utils/auth";
 import Link from "next/link";
 import { API_BASE_URL } from "../../utils/api";
@@ -6,10 +6,41 @@ import { API_BASE_URL } from "../../utils/api";
 export default function Login() {
   const { login } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
+  const submitting = !form.email.trim() || !form.password.trim();
   const submit = (e) => {
     e.preventDefault();
-    login(form.email, form.password);
+    if (submitting) return;
+    login(form.email.trim(), form.password.trim());
   };
+
+  // Google OAuth callback token handler
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith("#token=")) {
+        const token = hash.slice(7);
+        if (token) {
+          // Store in cookie and localStorage for frontend auth
+          try {
+            document.cookie = `token=${token}; path=/; max-age=43200;`;
+            localStorage.setItem("authToken", token);
+          } catch {}
+          // Remove hash from URL for cleanliness
+          window.history.replaceState(null, "", window.location.pathname);
+          window.location.replace("/dashboard");
+        }
+      }
+    }
+  }, []);
+
+  const startGoogle = () => {
+    const base = `${API_BASE_URL}/api/v1/auth/google`;
+    const redirect = encodeURIComponent(
+      `${window.location.origin}/auth/oauth-complete`
+    );
+    window.location.href = `${base}?redirect=${redirect}`;
+  };
+
   return (
     <div
       style={{ maxWidth: 420, margin: "4rem auto" }}
@@ -33,15 +64,16 @@ export default function Login() {
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
-          <button type="submit">Login</button>
-          <a href={`${API_BASE_URL}/api/v1/auth/google`}>
-            <button
-              type="button"
-              style={{ width: "100%", background: "#1f2340" }}
-            >
-              Google Sign In
-            </button>
-          </a>
+          <button type="submit" disabled={submitting}>
+            Login
+          </button>
+          <button
+            type="button"
+            onClick={startGoogle}
+            style={{ width: "100%", background: "#1f2340" }}
+          >
+            Google Sign In
+          </button>
         </form>
         <p style={{ marginTop: "1rem", fontSize: ".85rem", opacity: 0.8 }}>
           No account? <Link href="/auth/register">Register</Link>
